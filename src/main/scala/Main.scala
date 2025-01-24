@@ -6,7 +6,7 @@ import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch.generic.OpenSearchGenericClient.ClientOptions
-import org.opensearch.client.opensearch.generic.Requests
+import org.opensearch.client.opensearch.generic.{OpenSearchClientException, Requests}
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
 import queries.sql.{Select, SelectQueryGenerator}
 import queries.{IndexContext, OpenSearchDataType, QueryContext}
@@ -93,18 +93,21 @@ def createContext(): IndexContext = {
   val qContext = QueryContext(NonEmptyList(iContext, List()))
   val qGen = SelectQueryGenerator.make(qContext)
 
-  val selectLimitSizeProperty = Prop.forAll(qGen) {
+  val queryNonErroringProperty = Prop.forAll(qGen) {
     (q: Select) => {
       val query = q.serialize()
-      val result = runRawSqlQuery(client, query)
-      val resultRows = result("datarows").arr
-
-      resultRows.length == q.getLim
+      var result = true
+      try {
+        runRawSqlQuery(client, query)
+      } catch {
+        case e: OpenSearchClientException => result = false
+      }
+      ("evidence = " + query) |: result
     }
   }
 
   val selectFloatCmpResult = Test.check(
     Test.Parameters.defaultVerbose.withWorkers(workers),
-    selectLimitSizeProperty
+    queryNonErroringProperty
   )
 }

@@ -2,17 +2,17 @@ package queries.sql
 
 import scala.jdk.CollectionConverters._
 import org.scalacheck.Gen
-import queries.{IndexContext, QueryContext, QuerySerializable}
+import queries.{QueryContext, QuerySerializable}
 
 // TODO limit should not be parameter, additional parts need to be determined separately
-class Select(index: String, fields: List[String], lim: Int) extends QuerySerializable {
-  def getLim: Int = {
-    this.lim
-  }
-
-  def serialize(): String = {
+class Select(index: String, fields: List[String], where: Option[SqlExpression]) extends QuerySerializable {
+  override def serialize(): String = {
     val fieldNames = if (fields.isEmpty) "*" else fields.mkString("", ", ", "")
-    s"SELECT $fieldNames FROM $index LIMIT $lim"
+    val whereClause = where match {
+      case None => ""
+      case Some(ex) => "WHERE " + ex.serialize()
+    }
+    s"SELECT $fieldNames FROM $index $whereClause"
   }
 }
 
@@ -28,7 +28,7 @@ object SelectQueryGenerator {
     for {
       index <- Gen.oneOf(context.indices.toList)
       fields <- Gen.sequence(index.fields.keys.map(Gen.const))
-      limit <- Gen.choose(0, 100)
-    } yield Select(index.name, fields.asScala.toList, limit)
+      whereClause <- ExpressionGenerator.make(context)
+    } yield Select(index.name, fields.asScala.toList, Some(whereClause))
   }
 }
