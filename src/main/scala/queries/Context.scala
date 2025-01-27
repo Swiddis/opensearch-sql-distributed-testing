@@ -10,7 +10,10 @@ import cats.data.NonEmptyList
 enum OpenSearchDataType:
   case Boolean, Date, HalfFloat, Integer, Keyword, Text
 
-class IndexContext(val name: String, val fields: Map[String, OpenSearchDataType])
+class IndexContext(val name: String, val fields: Map[String, OpenSearchDataType]):
+  def fieldsWithType(t: OpenSearchDataType): Seq[String] = {
+    this.fields.filter((_, v) => v == t).keys.toList
+  }
 
 /**
  * Contains information that helps with useful semantic query generation. For instance, if we trivially generate random

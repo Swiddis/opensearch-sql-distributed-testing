@@ -3,6 +3,7 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop.{all, propBoolean}
 import org.scalacheck.Test
 import org.apache.hc.core5.http.HttpHost
+import org.opensearch.client.ResponseException
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch.generic.OpenSearchGenericClient.ClientOptions
@@ -10,6 +11,8 @@ import org.opensearch.client.opensearch.generic.{OpenSearchClientException, Requ
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
 import queries.sql.{Select, SelectQueryGenerator}
 import queries.{IndexContext, OpenSearchDataType, QueryContext}
+
+import scala.util.Try
 
 /**
  * Submit a SQL query directly to the provided client
@@ -19,7 +22,7 @@ import queries.{IndexContext, OpenSearchDataType, QueryContext}
  * @return The result of the query as an arbitrary/untyped Json object
  */
 def runRawSqlQuery(client: OpenSearchClient, query: String): ujson.Value = {
-  val untypedClient = client.generic().withClientOptions(ClientOptions.throwOnHttpErrors())
+  val untypedClient = client.generic()
   val requestBody = Map("query" -> query)
   val request = Requests
     .builder()
@@ -45,7 +48,7 @@ def runRawSqlQuery(client: OpenSearchClient, query: String): ujson.Value = {
 def workerCount(): Int = {
   // Threads are cheap so we can afford a few per CPU
   val maxProcessorThreads = 64 * Runtime.getRuntime.availableProcessors
-  val defaultOpenSearchSearchQueueLimit = 1000 // Upper bound to avoid 429 rejections
+  val defaultOpenSearchSearchQueueLimit = 1 // Upper bound to avoid 429 rejections
   Math.min(maxProcessorThreads, defaultOpenSearchSearchQueueLimit)
 }
 
@@ -85,24 +88,33 @@ def createContext(): IndexContext = {
   )
 }
 
+def prettyErrorReport(err: ujson.Value): String = {
+  val lines = List(
+    ("reason", err("reason").strOpt),
+    ("details", err("details").strOpt),
+    ("type", err("type").strOpt),
+  ).filter(l => l._2.isDefined).map(l => s"error.${l._1} = ${l._2.get}")
+  if lines.isEmpty then
+    "error = [No error information provided]"
+   else {
+    lines.mkString("\n")
+  }
+}
+
 @main def run(): Unit = {
   val workers = workerCount()
   val client = openSearchClient()
 
   val iContext = createContext()
   val qContext = QueryContext(NonEmptyList(iContext, List()))
-  val qGen = SelectQueryGenerator.make(qContext)
+  val qGen = SelectQueryGenerator.from(qContext)
 
   val queryNonErroringProperty = Prop.forAll(qGen) {
     (q: Select) => {
       val query = q.serialize()
-      var result = true
-      try {
-        runRawSqlQuery(client, query)
-      } catch {
-        case e: OpenSearchClientException => result = false
-      }
-      ("evidence = " + query) |: result
+      val result = runRawSqlQuery(client, query)
+      val errorReport: String = Try("\n" + prettyErrorReport(result("error").obj)).getOrElse("")
+      s"query = $query" + errorReport |: result("status").num.toInt == 200
     }
   }
 
