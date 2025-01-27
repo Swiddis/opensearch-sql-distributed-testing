@@ -46,10 +46,9 @@ def runRawSqlQuery(client: OpenSearchClient, query: String): ujson.Value = {
  * @return The number of workers to use per property check run.
  */
 def workerCount(): Int = {
-  // Threads are cheap so we can afford a few per CPU
-  val maxProcessorThreads = 64 * Runtime.getRuntime.availableProcessors
-  val defaultOpenSearchSearchQueueLimit = 1 // Upper bound to avoid 429 rejections
-  Math.min(maxProcessorThreads, defaultOpenSearchSearchQueueLimit)
+  // Turns out there's so many bugs being found that we currently crash the cluster by having ScalaCheck shrink
+  // concurrently. Until there's fewer bugs, let's just keep the tests running serially.
+  1
 }
 
 /**

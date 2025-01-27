@@ -8,9 +8,10 @@ lazy val root = project
 
     scalaVersion := scala3Version,
       
-    libraryDependencies += "org.scalameta" %% "munit" % "1.0.4" % Test,
+    libraryDependencies += "org.scalameta" %% "munit" % "1.1.0" % Test,
     libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.18.1",
     libraryDependencies += "org.opensearch.client" % "opensearch-java" % "2.19.0",
     libraryDependencies += "com.lihaoyi" %% "upickle" % "4.1.0",
-    libraryDependencies += "org.typelevel" %% "cats-core" % "2.12.0",
+    libraryDependencies += "org.typelevel" %% "cats-core" % "2.13.0",
+    libraryDependencies += "com.github.pureconfig" %% "pureconfig-core" % "0.17.8",
   )

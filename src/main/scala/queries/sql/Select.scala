@@ -1,18 +1,24 @@
 package queries.sql
 
-import scala.jdk.CollectionConverters._
+import config.Testing
 import org.scalacheck.Gen
 import queries.{QueryContext, QuerySerializable}
 
-// TODO limit should not be parameter, additional parts need to be determined separately
-class Select(index: String, fields: List[String], where: Option[Expr[SqlBoolean]]) extends QuerySerializable {
+case class Select(index: String, fields: List[String], where: Option[Expr[SqlBoolean]]) extends QuerySerializable {
   override def serialize(): String = {
     val fieldNames = if (fields.isEmpty) "*" else fields.mkString("", ", ", "")
     val whereClause = where match {
       case None => ""
-      case Some(ex) => "WHERE " + ex.serialize()
+      case Some(ex) => if ex.isConstant && Testing.config.disableConstantExprs then
+        ""
+      else
+        "WHERE " + ex.serialize()
     }
     s"SELECT $fieldNames FROM $index $whereClause"
+  }
+
+  override def toString(): String = {
+    this.serialize()
   }
 }
 
@@ -28,7 +34,7 @@ object SelectQueryGenerator {
     for {
       index <- Gen.oneOf(context.indices.toList)
       fields <- Gen.someOf(index.fields.keys)
-      whereClause <- Gen.option(ContextExprGen.boolExpr(index, 3))
+      whereClause <- Gen.some(ContextExprGen.boolExpr(index, 3))
     } yield Select(index.name, fields.toList, whereClause)
   }
 }

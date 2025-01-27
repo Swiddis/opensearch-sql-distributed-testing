@@ -6,7 +6,7 @@ package queries
 trait QuerySerializable:
   /**
    * Serialize this type as a sanitized string, safe to be submitted as a query part to the database.
-   * Kept as a separate method from `toString` to distinguish queries from debug strings.
+   * Kept as a separate method from `toString` to allow debug strings.
    *
    * @return The raw query string.
    */

@@ -25,19 +25,32 @@ type SqlBoolean = SqlNull | Boolean
 sealed trait Expr[T]:
   def serialize(): String
 
+  /**
+   * Useful for filtering constant clause generation, since `WHERE FALSE`-like queries tend to not be very useful.
+   *
+   * TODO instead of having this be a flag, we should use a ExprProperties class. Will keep this until we need more props.
+   *
+   * @return whether the current expression evaluates to a constant.
+   */
+  def isConstant: Boolean
+
 case class Literal[T](value: T) extends Expr[T]:
   override def serialize(): String = value.toString.toUpperCase // Literals tend to be upper: NULL, FALSE, 1.5E6
+  override def isConstant: Boolean = true
 
 case class Column[T](name: String) extends Expr[T]:
   override def serialize(): String = name
+  override def isConstant: Boolean = false
 
 case class UnaryOp[A, B](op: String, arg: Expr[A]) extends Expr[B]:
   override def serialize(): String = op.replace("$1", arg.serialize())
+  override def isConstant: Boolean = arg.isConstant
 
 case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A]) extends Expr[B]:
   // We always wrap binary ops in parentheses to make precedence "just work"
   override def serialize(): String =
     "(" + op.replace("$1", left.serialize()).replace("$2", right.serialize()) + ")"
+  override def isConstant: Boolean = left.isConstant && right.isConstant
 
 /**
  * `ExprGen` constructs ScalaCheck generators for `Expr`s.
