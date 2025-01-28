@@ -15,6 +15,10 @@ enum OpenSearchDataType:
   //  - Index mapping definitions in Main
   case Boolean, Integer
 
+/** The main purpose of IndexContext is to bundle information that's useful for
+  * generating queries on an index, such as the name of the index and the names
+  * and types of its fields.
+  */
 case class IndexContext(name: String, fields: Map[String, OpenSearchDataType]):
   def fieldsWithType(t: OpenSearchDataType): Seq[String] = {
     this.fields.filter((_, v) => v == t).keys.toList

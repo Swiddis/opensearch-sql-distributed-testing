@@ -17,12 +17,15 @@ def listOf[A](gen: Gen[A], size: Int): List[A] =
   (0 to size).map(_ => gen.sample.get).toList
 
 object IndexGenerator {
+
+  /** Generate an [[Index]] with some sample data, using the fields available
+    * from OpenSearchDataType
+    */
   def genIndex(): Index = {
     val indexName =
       "test_" + UUID.randomUUID().toString.replace("-", "_").substring(0, 8)
 
-//    val fieldNames = take(Gen.atLeastOne(alphabet))
-    val fieldNames = List("a", "b", "c", "d")
+    val fieldNames = take(Gen.atLeastOne(alphabet))
     val fields = fieldNames
       .map(field => (field, take(Gen.oneOf(OpenSearchDataType.values))))
       .toMap
