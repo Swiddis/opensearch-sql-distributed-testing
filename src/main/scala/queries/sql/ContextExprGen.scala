@@ -50,13 +50,16 @@ object ContextExprGen {
 
       Gen.oneOf(
         next,
-        ExprGen.unaryOp(List(
-          // NOT is fundamentally broken, disable for now.
-          // Tracking: https://github.com/opensearch-project/sql/issues/3266
-          // "NOT $1",
-          "$1 IS NULL",
-          "$1 IS NOT NULL"
-        ), next),
+        ExprGen.unaryOp(
+          List(
+            // NOT is fundamentally broken, disable for now.
+            // Tracking: https://github.com/opensearch-project/sql/issues/3266
+            // "NOT $1",
+            "$1 IS NULL",
+            "$1 IS NOT NULL"
+          ),
+          next
+        ),
         ExprGen.binaryOp(List("$1 = $2", "$1 <> $2"), next),
         ExprGen.binaryOp(
           List(

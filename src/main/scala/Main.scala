@@ -1,21 +1,32 @@
 import cats.data.NonEmptyList
+import datagen.{Index, IndexCreator, IndexGenerator}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.{all, propBoolean}
 import org.scalacheck.Test
 import org.apache.hc.core5.http.HttpHost
-import org.opensearch.client.ResponseException
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
-import org.opensearch.client.opensearch.generic.OpenSearchGenericClient.ClientOptions
-import org.opensearch.client.opensearch.generic.{
-  OpenSearchClientException,
-  Requests
+import org.opensearch.client.opensearch._types.Refresh
+import org.opensearch.client.opensearch._types.mapping.{
+  BooleanProperty,
+  IntegerNumberProperty,
+  Property,
+  TypeMapping
 }
+import org.opensearch.client.opensearch.core.BulkRequest
+import org.opensearch.client.opensearch.core.bulk.{
+  BulkOperation,
+  IndexOperation
+}
+import org.opensearch.client.opensearch.generic.Requests
+import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
 import queries.sql.{Select, SelectQueryGenerator}
 import queries.{IndexContext, OpenSearchDataType, QueryContext}
 
+import scala.collection.mutable
 import scala.util.Try
+import scala.jdk.CollectionConverters.*
 
 /** Submit a SQL query directly to the provided client
   *
@@ -77,22 +88,10 @@ def openSearchClient(): OpenSearchClient = {
 
 // TODO this should be dynamic, and create an actual context on the cluster
 // For now we hardcode based on sample data
-def createContext(): IndexContext = {
-  IndexContext(
-    name = "opensearch_dashboards_sample_data_ecommerce",
-    fields = Map(
-      "category" -> OpenSearchDataType.Text,
-      "currency" -> OpenSearchDataType.Keyword,
-      "customer_first_name" -> OpenSearchDataType.Text,
-      "day_of_week_i" -> OpenSearchDataType.Integer,
-      "manufacturer" -> OpenSearchDataType.Text,
-      "order_date" -> OpenSearchDataType.Date,
-      "products.base_price" -> OpenSearchDataType.HalfFloat,
-      "total_quantity" -> OpenSearchDataType.Integer,
-      "type" -> OpenSearchDataType.Keyword,
-      "user" -> OpenSearchDataType.Keyword
-    )
-  )
+def createContext(client: OpenSearchClient): IndexContext = {
+  val index = IndexGenerator.genIndex()
+  IndexCreator.createIndex(client, index)
+  index.context
 }
 
 def prettyErrorReport(err: ujson.Value): String = {
@@ -111,7 +110,7 @@ def prettyErrorReport(err: ujson.Value): String = {
   val workers = workerCount()
   val client = openSearchClient()
 
-  val iContext = createContext()
+  val iContext = createContext(client)
   val qContext = QueryContext(NonEmptyList(iContext, List()))
   val qGen = SelectQueryGenerator.from(qContext)
 
@@ -126,7 +125,9 @@ def prettyErrorReport(err: ujson.Value): String = {
   }
 
   val selectFloatCmpResult = Test.check(
-    Test.Parameters.defaultVerbose.withWorkers(workers),
+    Test.Parameters.defaultVerbose
+      .withWorkers(workers)
+      .withMinSuccessfulTests(1000),
     queryNonErroringProperty
   )
 }

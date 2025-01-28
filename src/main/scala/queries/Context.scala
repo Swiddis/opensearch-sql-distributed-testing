@@ -8,12 +8,14 @@ import cats.data.NonEmptyList
   *   https://opensearch.org/docs/latest/search-plugins/sql/datatypes/
   */
 enum OpenSearchDataType:
-  case Boolean, Date, HalfFloat, Integer, Keyword, Text
+  // TODO very small subset for now; this must be exhaustively used in a few places so we shouldn't add to it too quickly
+  //  Some usages:
+  //  - Expr types in [[queries.sql.Expr]]
+  //  - Data generators in [[datagen.Index]]
+  //  - Index mapping definitions in Main
+  case Boolean, Integer
 
-class IndexContext(
-    val name: String,
-    val fields: Map[String, OpenSearchDataType]
-):
+case class IndexContext(name: String, fields: Map[String, OpenSearchDataType]):
   def fieldsWithType(t: OpenSearchDataType): Seq[String] = {
     this.fields.filter((_, v) => v == t).keys.toList
   }

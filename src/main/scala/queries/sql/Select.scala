@@ -20,7 +20,7 @@ case class Select(
     s"SELECT $fieldNames FROM $index $whereClause"
   }
 
-  override def toString(): String = {
+  override def toString: String = {
     this.serialize()
   }
 }
