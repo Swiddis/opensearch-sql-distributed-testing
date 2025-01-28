@@ -115,9 +115,10 @@ object IndexCreator {
     val request = new CreateIndexRequest.Builder()
       .index(index.context.name)
       .mappings(mapping.build())
+      .build()
 
     try {
-      Right(client.indices().create(request.build()))
+      Right(client.indices().create(request))
     } catch {
       case e: OpenSearchException => Left(e)
     }
