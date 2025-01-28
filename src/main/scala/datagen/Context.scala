@@ -1,4 +1,4 @@
-package queries
+package datagen
 
 import cats.data.NonEmptyList
 

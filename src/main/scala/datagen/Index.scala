@@ -1,8 +1,6 @@
 package datagen
 
 import org.scalacheck.Gen
-import queries.OpenSearchDataType
-import queries.{IndexContext, OpenSearchDataType}
 
 import java.util.UUID
 import scala.collection.mutable

@@ -1,8 +1,7 @@
 package queries.sql
 
+import datagen.{IndexContext, OpenSearchDataType}
 import org.scalacheck.Gen
-import queries.IndexContext
-import queries.OpenSearchDataType
 
 /** ContextExprGen is a set of wrappers around `ExprGen` that uses the current
   * `IndexContext` to construct expressions respecting the requested type.

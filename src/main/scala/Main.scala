@@ -1,5 +1,12 @@
 import cats.data.NonEmptyList
-import datagen.{Index, IndexCreator, IndexGenerator}
+import datagen.{
+  Index,
+  IndexContext,
+  IndexCreator,
+  IndexGenerator,
+  OpenSearchDataType,
+  QueryContext
+}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.{all, propBoolean}
 import org.scalacheck.Test
@@ -22,7 +29,6 @@ import org.opensearch.client.opensearch.generic.Requests
 import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
 import queries.sql.{Select, SelectQueryGenerator}
-import queries.{IndexContext, OpenSearchDataType, QueryContext}
 
 import scala.collection.mutable
 import scala.util.Try

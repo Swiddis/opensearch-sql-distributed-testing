@@ -1,8 +1,9 @@
 package queries.sql
 
 import config.Testing
+import datagen.QueryContext
 import org.scalacheck.Gen
-import queries.{QueryContext, QuerySerializable}
+import queries.QuerySerializable
 
 case class Select(
     index: String,
