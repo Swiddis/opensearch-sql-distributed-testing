@@ -59,7 +59,8 @@ object ContextExprGen {
           ),
           next
         ),
-        ExprGen.binaryOp(List("$1 = $2", "$1 <> $2", "$1 AND $2", "$1 OR $2"), next),
+        ExprGen
+          .binaryOp(List("$1 = $2", "$1 <> $2", "$1 AND $2", "$1 OR $2"), next),
         ExprGen.binaryOp(
           List(
             "$1 = $2",

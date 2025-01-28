@@ -2,12 +2,14 @@ package queries.ppl
 
 import org.scalacheck.Gen
 
-/** PPL defines two types of null: NULL and MISSING. This is similar to how JS does null and undefined.
+/** PPL defines two types of null: NULL and MISSING. This is similar to how JS
+  * does null and undefined.
   */
 class PplNull(val flavor: "NULL" | "MISSING"):
   override def toString: String = flavor
 
-/** While SQL logic is ternary, PPL logic is quaternary: there are two null values in addition to the true and false values.
+/** While SQL logic is ternary, PPL logic is quaternary: there are two null
+  * values in addition to the true and false values.
   */
 type PplBoolean = PplNull | Boolean
 

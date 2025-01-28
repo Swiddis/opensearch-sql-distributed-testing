@@ -1,5 +1,12 @@
 import cats.data.NonEmptyList
-import datagen.{Index, IndexContext, IndexCreator, IndexGenerator, OpenSearchDataType, QueryContext}
+import datagen.{
+  Index,
+  IndexContext,
+  IndexCreator,
+  IndexGenerator,
+  OpenSearchDataType,
+  QueryContext
+}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.{all, propBoolean}
 import org.scalacheck.Test
@@ -7,9 +14,17 @@ import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.Refresh
-import org.opensearch.client.opensearch._types.mapping.{BooleanProperty, IntegerNumberProperty, Property, TypeMapping}
+import org.opensearch.client.opensearch._types.mapping.{
+  BooleanProperty,
+  IntegerNumberProperty,
+  Property,
+  TypeMapping
+}
 import org.opensearch.client.opensearch.core.BulkRequest
-import org.opensearch.client.opensearch.core.bulk.{BulkOperation, IndexOperation}
+import org.opensearch.client.opensearch.core.bulk.{
+  BulkOperation,
+  IndexOperation
+}
 import org.opensearch.client.opensearch.generic.Requests
 import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
@@ -29,7 +44,11 @@ import scala.jdk.CollectionConverters.*
   * @return
   *   The result of the query as an arbitrary/untyped Json object
   */
-def runRawQuery(client: OpenSearchClient, query: String, language: "ppl" | "sql"): ujson.Value = {
+def runRawQuery(
+    client: OpenSearchClient,
+    query: String,
+    language: "ppl" | "sql"
+): ujson.Value = {
   val untypedClient = client.generic()
   val requestBody = Map("query" -> query)
   val request = Requests
@@ -68,7 +87,7 @@ def workerCount(): Int = {
   *   The OpenSearch client.
   */
 def openSearchClient(): OpenSearchClient = {
-  // Hardcoded for now -- this is where to add logic to load one of multiple clusters from a config file, if supporting
+  // TODO Hardcoded for now -- this is where to add logic to load one of multiple clusters from a config file, if supporting
   // multiple cluster configs.
   val hosts = Array(HttpHost("http", "localhost", 9200))
   val transport = ApacheHttpClient5TransportBuilder
@@ -78,9 +97,15 @@ def openSearchClient(): OpenSearchClient = {
   OpenSearchClient(transport)
 }
 
-// TODO this should be dynamic, and create an actual context on the cluster
-// For now we hardcode based on sample data
-def createContext(client: OpenSearchClient): IndexContext = {
+/** Generate an [[IndexContext]] linking to an index with some sample data in
+  * it.
+  *
+  * @param client
+  *   An OpenSearch client to push the index data to.
+  * @return
+  *   The [[IndexContext]] containing the index's metadata.
+  */
+def generateIndexContext(client: OpenSearchClient): IndexContext = {
   val index = IndexGenerator.genIndex()
   IndexCreator.createIndex(client, index)
   index.context
@@ -102,7 +127,7 @@ def prettyErrorReport(err: ujson.Value): String = {
   val workers = workerCount()
   val client = openSearchClient()
 
-  val iContext = createContext(client)
+  val iContext = generateIndexContext(client)
   val qContext = QueryContext(NonEmptyList(iContext, List()))
   System.out.println(s"Running batch using index: $iContext")
 

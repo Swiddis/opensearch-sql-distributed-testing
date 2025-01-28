@@ -17,7 +17,7 @@ case class SourceQuery(
         // operator which generates them by default
         // Tracking: https://github.com/opensearch-project/sql/issues/3272
         if ex.isInstanceOf[BinaryOp[?, ?]] then
-           "| WHERE " + ser.substring(1, ser.length - 1)
+          "| WHERE " + ser.substring(1, ser.length - 1)
         else "| WHERE " + ser
       }
     }
@@ -30,6 +30,7 @@ case class SourceQuery(
 }
 
 object SourceQueryGenerator {
+
   /** Create a [[org.scalacheck.Gen]] which produces queries aligning with the
     * provided [[QueryContext]].
     *

@@ -37,7 +37,9 @@ object ContextExprGen {
   def boolExpr(context: IndexContext, depth: Int): Gen[Expr[PplBoolean]] = {
     if (depth <= 0) {
       val availableFields = context.fieldsWithType(OpenSearchDataType.Boolean)
-      val literal = ExprGen.literal(Gen.oneOf(false, true, PplNull("NULL"), PplNull("MISSING")))
+      val literal = ExprGen.literal(
+        Gen.oneOf(false, true, PplNull("NULL"), PplNull("MISSING"))
+      )
 
       Gen.oneOf(
         literal,
@@ -51,11 +53,14 @@ object ContextExprGen {
         next,
         ExprGen.unaryOp(
           List(
-            "NOT $1",
+            "NOT $1"
           ),
           next
         ),
-        ExprGen.binaryOp(List("$1 = $2", "$1 != $2", "$1 AND $2", "$1 OR $2", "$1 XOR $2"), next),
+        ExprGen.binaryOp(
+          List("$1 = $2", "$1 != $2", "$1 AND $2", "$1 OR $2", "$1 XOR $2"),
+          next
+        ),
         ExprGen.binaryOp(
           List(
             "$1 = $2",
