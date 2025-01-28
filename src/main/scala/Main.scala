@@ -1,67 +1,12 @@
 import cats.data.NonEmptyList
-import datagen.{
-  Index,
-  IndexContext,
-  IndexCreator,
-  IndexGenerator,
-  OpenSearchDataType,
-  QueryContext
-}
+import datagen.{IndexContext, IndexCreator, IndexGenerator, QueryContext}
 import org.scalacheck.Prop
-import org.scalacheck.Prop.{all, propBoolean}
 import org.scalacheck.Test
 import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
-import org.opensearch.client.opensearch._types.Refresh
-import org.opensearch.client.opensearch._types.mapping.{
-  BooleanProperty,
-  IntegerNumberProperty,
-  Property,
-  TypeMapping
-}
-import org.opensearch.client.opensearch.core.BulkRequest
-import org.opensearch.client.opensearch.core.bulk.{
-  BulkOperation,
-  IndexOperation
-}
-import org.opensearch.client.opensearch.generic.Requests
-import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
-import queries.ppl.{SourceQuery, SourceQueryGenerator}
-import queries.sql.{SelectQuery, SelectQueryGenerator}
-
-import scala.collection.mutable
-import scala.util.Try
-import scala.jdk.CollectionConverters.*
-
-/** Submit a SQL query directly to the provided client
-  *
-  * @param client
-  *   An OpenSearch client
-  * @param query
-  *   A SQL query
-  * @return
-  *   The result of the query as an arbitrary/untyped Json object
-  */
-def runRawQuery(
-    client: OpenSearchClient,
-    query: String,
-    language: "ppl" | "sql"
-): ujson.Value = {
-  val untypedClient = client.generic()
-  val requestBody = Map("query" -> query)
-  val request = Requests
-    .builder()
-    .endpoint(s"/_plugins/_$language")
-    .method("POST")
-    .json(ujson.write(requestBody))
-    .build()
-  val response = untypedClient.execute(request)
-  val responseBody = response.getBody.get()
-
-  ujson.read(responseBody.bodyAsString())
-}
+import properties.CrashProperties
 
 /** Makes an educated guess on a good number of threads to use for property
   * checking. A decent handful of threads per processor since we're bound by
@@ -111,57 +56,53 @@ def generateIndexContext(client: OpenSearchClient): IndexContext = {
   index.context
 }
 
-def prettyErrorReport(err: ujson.Value): String = {
-  val lines = List(
-    ("reason", err("reason").strOpt),
-    ("details", err("details").strOpt),
-    ("type", err("type").strOpt)
-  ).filter(l => l._2.isDefined).map(l => s"error.${l._1} = ${l._2.get}")
-  if lines.isEmpty then "error = [No error information provided]"
-  else {
-    lines.mkString("\n")
-  }
+/** Runs a ScalaCheck property with custom parameters.
+  *
+  * This method configures ScalaCheck to use a specific number of worker threads
+  * and sets a minimum number of successful tests. It's designed to provide a
+  * standardized way of running property-based tests across the project.
+  *
+  * @param property
+  *   The ScalaCheck property to be tested.
+  * @return
+  *   The result of the property check.
+  */
+def check(property: Prop): Test.Result = {
+  val workers = workerCount()
+  Test.check(
+    Test.Parameters.defaultVerbose
+      .withWorkers(workers)
+      .withMinSuccessfulTests(1000),
+    property
+  )
 }
 
-@main def run(): Unit = {
-  val workers = workerCount()
+/** Executes a batch of property-based tests against an OpenSearch cluster.
+  *
+  * TODO we currently just output failures to STDOUT, later let's make a result
+  * report
+  *
+  * @param properties
+  *   A list of functions that take an OpenSearchClient and a QueryContext, and
+  *   construct a ScalaCheck Prop using these parameters.
+  */
+def runPropertyBatch(
+    properties: List[(OpenSearchClient, QueryContext) => Prop]
+): Unit = {
   val client = openSearchClient()
 
   val iContext = generateIndexContext(client)
   val qContext = QueryContext(NonEmptyList(iContext, List()))
   System.out.println(s"Running batch using index: $iContext")
 
-  val sqlGen = SelectQueryGenerator.from(qContext)
-  val sqlQueryNonErroringProperty = Prop.forAll(sqlGen) { (q: SelectQuery) =>
-    {
-      val query = q.serialize()
-      val result = runRawQuery(client, query, "sql")
-      val errorReport: String =
-        Try("\n" + prettyErrorReport(result("error").obj)).getOrElse("")
-      s"query = $query" + errorReport |: result("status").num.toInt == 200
-    }
-  }
-  val sqlNonErrorResult = Test.check(
-    Test.Parameters.defaultVerbose
-      .withWorkers(workers)
-      .withMinSuccessfulTests(1000),
-    sqlQueryNonErroringProperty
+  for (property <- properties) check(property(client, qContext))
+}
+
+@main def run(): Unit = {
+  val properties = List(
+    CrashProperties.makeSqlQuerySuccessProperty,
+    CrashProperties.makePplQuerySuccessProperty
   )
 
-  val pplGen = SourceQueryGenerator.from(qContext)
-  val pplQueryNonErroringProperty = Prop.forAll(pplGen) { (q: SourceQuery) =>
-    {
-      val query = q.serialize()
-      val result = runRawQuery(client, query, "ppl")
-      val errorReport: String =
-        Try("\n" + prettyErrorReport(result("error").obj)).getOrElse("")
-      s"query = $query" + errorReport |: result.obj.get("error").isEmpty
-    }
-  }
-  val pplNonErrorResult = Test.check(
-    Test.Parameters.defaultVerbose
-      .withWorkers(workers)
-      .withMinSuccessfulTests(1000),
-    pplQueryNonErroringProperty
-  )
+  runPropertyBatch(properties)
 }
