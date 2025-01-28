@@ -4,11 +4,8 @@ import datagen.QueryContext
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
-import properties.ResultFormatter.prettyErrorReport
 import queries.ppl.{SourceQuery, SourceQueryGenerator}
 import queries.sql.{SelectQuery, SelectQueryGenerator}
-
-import scala.util.Try
 
 object CrashProperties {
   def makeSqlQuerySuccessProperty(
