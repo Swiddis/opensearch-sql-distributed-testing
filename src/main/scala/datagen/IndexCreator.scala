@@ -138,9 +138,6 @@ object IndexCreator {
       index: Index
   ): Either[OpenSearchException, BulkResponse] = {
     val records = asJsonObjects(index.data)
-    records.zipWithIndex.foreach((row, i) => {
-      System.out.println(s"$i: ${row.obj.asJava}")
-    })
 
     val bulkReqOps: IndexedSeq[BulkOperation] =
       records.zipWithIndex.map((rec, idx) => {

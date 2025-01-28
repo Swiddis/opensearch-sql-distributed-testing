@@ -1,4 +1,4 @@
-package queries.sql
+package queries.ppl
 
 import datagen.{IndexContext, OpenSearchDataType}
 import org.scalacheck.Gen
@@ -34,10 +34,10 @@ object ContextExprGen {
 
   /** Produce a generator for boolean expressions
     */
-  def boolExpr(context: IndexContext, depth: Int): Gen[Expr[SqlBoolean]] = {
+  def boolExpr(context: IndexContext, depth: Int): Gen[Expr[PplBoolean]] = {
     if (depth <= 0) {
       val availableFields = context.fieldsWithType(OpenSearchDataType.Boolean)
-      val literal = ExprGen.literal(Gen.oneOf(false, true, SqlNull()))
+      val literal = ExprGen.literal(Gen.oneOf(false, true, PplNull("NULL"), PplNull("MISSING")))
 
       Gen.oneOf(
         literal,
@@ -51,19 +51,15 @@ object ContextExprGen {
         next,
         ExprGen.unaryOp(
           List(
-            // NOT is fundamentally broken, disable for now.
-            // Tracking: https://github.com/opensearch-project/sql/issues/3266
-            // "NOT $1",
-            "$1 IS NULL",
-            "$1 IS NOT NULL"
+            "NOT $1",
           ),
           next
         ),
-        ExprGen.binaryOp(List("$1 = $2", "$1 <> $2", "$1 AND $2", "$1 OR $2"), next),
+        ExprGen.binaryOp(List("$1 = $2", "$1 != $2", "$1 AND $2", "$1 OR $2", "$1 XOR $2"), next),
         ExprGen.binaryOp(
           List(
             "$1 = $2",
-            "$1 <> $2",
+            "$1 != $2",
             "$1 > $2",
             "$1 < $2",
             "$1 >= $2",

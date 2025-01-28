@@ -1,24 +1,27 @@
-package queries.sql
+package queries.ppl
 
-import config.Testing
 import datagen.QueryContext
 import org.scalacheck.Gen
 import queries.QuerySerializable
 
-case class Select(
+case class SourceQuery(
     index: String,
-    fields: List[String],
-    where: Option[Expr[SqlBoolean]]
+    where: Option[Expr[PplBoolean]]
 ) extends QuerySerializable {
   override def serialize(): String = {
-    val fieldNames = if (fields.isEmpty) "*" else fields.mkString("", ", ", "")
     val whereClause = where match {
       case None => ""
-      case Some(ex) =>
-        if ex.isConstant && Testing.config.disableConstantExprs then ""
-        else "WHERE " + ex.serialize()
+      case Some(ex) => {
+        val ser = ex.serialize()
+        // PPL can't handle outer-level parentheses for WHERE clauses, so we remove them if we're using a binary
+        // operator which generates them by default
+        // Tracking: https://github.com/opensearch-project/sql/issues/3272
+        if ex.isInstanceOf[BinaryOp[?, ?]] then
+           "| WHERE " + ser.substring(1, ser.length - 1)
+        else "| WHERE " + ser
+      }
     }
-    s"SELECT $fieldNames FROM $index $whereClause"
+    s"SOURCE = $index $whereClause"
   }
 
   override def toString: String = {
@@ -26,8 +29,7 @@ case class Select(
   }
 }
 
-object SelectQueryGenerator {
-
+object SourceQueryGenerator {
   /** Create a [[org.scalacheck.Gen]] which produces queries aligning with the
     * provided [[QueryContext]].
     *
@@ -37,11 +39,10 @@ object SelectQueryGenerator {
     * @return
     *   A generator for queries satisfying that context
     */
-  def from(context: QueryContext): Gen[Select] = {
+  def from(context: QueryContext): Gen[SourceQuery] = {
     for {
       index <- Gen.oneOf(context.indices.toList)
-      fields <- Gen.someOf(index.fields.keys)
       whereClause <- Gen.some(ContextExprGen.boolExpr(index, 3))
-    } yield Select(index.name, fields.toList, whereClause)
+    } yield SourceQuery(index.name, whereClause)
   }
 }

@@ -1,12 +1,5 @@
 import cats.data.NonEmptyList
-import datagen.{
-  Index,
-  IndexContext,
-  IndexCreator,
-  IndexGenerator,
-  OpenSearchDataType,
-  QueryContext
-}
+import datagen.{Index, IndexContext, IndexCreator, IndexGenerator, OpenSearchDataType, QueryContext}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.{all, propBoolean}
 import org.scalacheck.Test
@@ -14,21 +7,14 @@ import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.Refresh
-import org.opensearch.client.opensearch._types.mapping.{
-  BooleanProperty,
-  IntegerNumberProperty,
-  Property,
-  TypeMapping
-}
+import org.opensearch.client.opensearch._types.mapping.{BooleanProperty, IntegerNumberProperty, Property, TypeMapping}
 import org.opensearch.client.opensearch.core.BulkRequest
-import org.opensearch.client.opensearch.core.bulk.{
-  BulkOperation,
-  IndexOperation
-}
+import org.opensearch.client.opensearch.core.bulk.{BulkOperation, IndexOperation}
 import org.opensearch.client.opensearch.generic.Requests
 import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
-import queries.sql.{Select, SelectQueryGenerator}
+import queries.ppl.{SourceQuery, SourceQueryGenerator}
+import queries.sql.{SelectQuery, SelectQueryGenerator}
 
 import scala.collection.mutable
 import scala.util.Try
@@ -43,12 +29,12 @@ import scala.jdk.CollectionConverters.*
   * @return
   *   The result of the query as an arbitrary/untyped Json object
   */
-def runRawSqlQuery(client: OpenSearchClient, query: String): ujson.Value = {
+def runRawQuery(client: OpenSearchClient, query: String, language: "ppl" | "sql"): ujson.Value = {
   val untypedClient = client.generic()
   val requestBody = Map("query" -> query)
   val request = Requests
     .builder()
-    .endpoint("/_plugins/_sql")
+    .endpoint(s"/_plugins/_$language")
     .method("POST")
     .json(ujson.write(requestBody))
     .build()
@@ -118,22 +104,39 @@ def prettyErrorReport(err: ujson.Value): String = {
 
   val iContext = createContext(client)
   val qContext = QueryContext(NonEmptyList(iContext, List()))
-  val qGen = SelectQueryGenerator.from(qContext)
+  System.out.println(s"Running batch using index: $iContext")
 
-  val queryNonErroringProperty = Prop.forAll(qGen) { (q: Select) =>
+  val sqlGen = SelectQueryGenerator.from(qContext)
+  val sqlQueryNonErroringProperty = Prop.forAll(sqlGen) { (q: SelectQuery) =>
     {
       val query = q.serialize()
-      val result = runRawSqlQuery(client, query)
+      val result = runRawQuery(client, query, "sql")
       val errorReport: String =
         Try("\n" + prettyErrorReport(result("error").obj)).getOrElse("")
       s"query = $query" + errorReport |: result("status").num.toInt == 200
     }
   }
-
-  val selectFloatCmpResult = Test.check(
+  val sqlNonErrorResult = Test.check(
     Test.Parameters.defaultVerbose
       .withWorkers(workers)
       .withMinSuccessfulTests(1000),
-    queryNonErroringProperty
+    sqlQueryNonErroringProperty
+  )
+
+  val pplGen = SourceQueryGenerator.from(qContext)
+  val pplQueryNonErroringProperty = Prop.forAll(pplGen) { (q: SourceQuery) =>
+    {
+      val query = q.serialize()
+      val result = runRawQuery(client, query, "ppl")
+      val errorReport: String =
+        Try("\n" + prettyErrorReport(result("error").obj)).getOrElse("")
+      s"query = $query" + errorReport |: result.obj.get("error").isEmpty
+    }
+  }
+  val pplNonErrorResult = Test.check(
+    Test.Parameters.defaultVerbose
+      .withWorkers(workers)
+      .withMinSuccessfulTests(1000),
+    pplQueryNonErroringProperty
   )
 }
