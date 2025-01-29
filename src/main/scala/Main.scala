@@ -79,8 +79,8 @@ def check(property: Prop): Test.Result = {
 
 /** Executes a batch of property-based tests against an OpenSearch cluster.
   *
-  * TODO we currently just output failures to STDOUT, later let's make a
-  *  result report
+  * TODO we currently just output failures to STDOUT, later let's make a result
+  * report
   *
   * @param properties
   *   A list of functions that take an OpenSearchClient and a QueryContext, and
