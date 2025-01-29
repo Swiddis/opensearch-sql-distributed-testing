@@ -13,12 +13,12 @@ class PplNull(val flavor: "NULL" | "MISSING"):
   */
 type PplBoolean = PplNull | Boolean
 
-/** The `Expr` trait represents the top-level type for SQL expressions (e.g. the
-  * argument to a `WHERE` clause, or a variable used in a `SELECT` clause).
+/** The `Expr` trait represents the top-level type for PPL expressions (e.g. the
+  * argument to a `WHERE` clause, or a variable used in a `FIELDS` clause).
   *
   * @tparam T
-  *   The type that the expression evaluates to, used to avoid cases like
-  *   `SELECT * WHERE -NULL`.
+  *   The type that the expression evaluates to, used to avoid cases like `WHERE
+  *   -NULL`.
   */
 sealed trait Expr[T]:
   def serialize(): String
@@ -35,11 +35,24 @@ case class UnaryOp[A, B](op: String, arg: Expr[A]) extends Expr[B]:
 
 case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A])
     extends Expr[B]:
-  // We always wrap binary ops in parentheses to make precedence "just work"
+  /** To avoid generating too many redundant parentheses, we only add
+    * parentheses around the sides of binary operations where order is more
+    * likely to matter.
+    *
+    * @see
+    *   https://github.com/opensearch-project/sql/issues/3272
+    */
+  private def serializeWithMaybeParens(ex: Expr[A]): String = {
+    ex match {
+      case BinaryOp(left, op, right) => "(" + ex.serialize() + ")"
+      case _                         => ex.serialize()
+    }
+  }
+
   override def serialize(): String =
-    "(" + op
-      .replace("$1", left.serialize())
-      .replace("$2", right.serialize()) + ")"
+    op
+      .replace("$1", serializeWithMaybeParens(left))
+      .replace("$2", serializeWithMaybeParens(right))
 
 /** `ExprGen` constructs ScalaCheck generators for `Expr`s.
   *

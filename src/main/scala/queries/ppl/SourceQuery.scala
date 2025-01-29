@@ -10,16 +10,8 @@ case class SourceQuery(
 ) extends QuerySerializable {
   override def serialize(): String = {
     val whereClause = where match {
-      case None => ""
-      case Some(ex) => {
-        val ser = ex.serialize()
-        // PPL can't handle outer-level parentheses for WHERE clauses, so we remove them if we're using a binary
-        // operator which generates them by default
-        // Tracking: https://github.com/opensearch-project/sql/issues/3272
-        if ex.isInstanceOf[BinaryOp[?, ?]] then
-          "| WHERE " + ser.substring(1, ser.length - 1)
-        else "| WHERE " + ser
-      }
+      case None     => ""
+      case Some(ex) => "| WHERE " + ex.serialize()
     }
     s"SOURCE = $index $whereClause"
   }
