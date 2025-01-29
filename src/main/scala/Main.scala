@@ -1,4 +1,5 @@
 import cats.data.NonEmptyList
+import config.{ConcurrencyLevel, Testing}
 import datagen.{IndexContext, IndexCreator, IndexGenerator, QueryContext}
 import org.scalacheck.Prop
 import org.scalacheck.Test
@@ -21,9 +22,15 @@ import properties.{CrashProperties, PropTestClient}
   *   The number of workers to use per property check run.
   */
 def workerCount(): Int = {
-  // Turns out there's so many bugs being found that we currently crash the cluster by having ScalaCheck shrink
-  // concurrently. Until there's fewer bugs, let's just keep the tests running serially.
-  1
+  val workers = Testing.config.concurrency match {
+    case ConcurrencyLevel.None => 1
+    case ConcurrencyLevel.Low  => Runtime.getRuntime.availableProcessors
+    case ConcurrencyLevel.High => 32 * Runtime.getRuntime.availableProcessors
+  }
+  Math.min(
+    workers,
+    1000
+  ) // Upper bound: default max OpenSearch search queue size
 }
 
 /** Load an OpenSearch client to be used in testing.
