@@ -37,7 +37,7 @@ In addition to `src/main/scala/Main` there are 4 packages:
 
 ## Usage
 
-The exact versioned language dependencies are listed in [.mise.toml](./.mise.toml), and can be
+The exact versioned language dependencies are listed in [mise.toml](./mise.toml), and can be
 installed via [Mise](https://mise.jdx.dev/) with `mise install`. If you'd rather install them
 manually, you really just need a copy of Scala 3, SBT, and a version 21 JDK.
 
