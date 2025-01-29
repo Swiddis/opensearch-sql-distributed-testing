@@ -6,7 +6,7 @@ import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
-import properties.CrashProperties
+import properties.{CrashProperties, PropTestClient}
 
 /** Makes an educated guess on a good number of threads to use for property
   * checking. A decent handful of threads per processor since we're bound by
@@ -87,15 +87,16 @@ def check(property: Prop): Test.Result = {
   *   construct a ScalaCheck Prop using these parameters.
   */
 def runPropertyBatch(
-    properties: List[(OpenSearchClient, QueryContext) => Prop]
+    properties: List[(PropTestClient, QueryContext) => Prop]
 ): Unit = {
   val client = openSearchClient()
+  val propClient = PropTestClient(client)
 
   val iContext = generateIndexContext(client)
   val qContext = QueryContext(NonEmptyList(iContext, List()))
   System.out.println(s"Running batch using index: $iContext")
 
-  for (property <- properties) check(property(client, qContext))
+  for (property <- properties) check(property(propClient, qContext))
 }
 
 @main def run(): Unit = {

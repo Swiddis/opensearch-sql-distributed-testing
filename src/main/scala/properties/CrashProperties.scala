@@ -9,16 +9,15 @@ import queries.sql.{SelectQuery, SelectQueryGenerator}
 
 object CrashProperties {
   def makeSqlQuerySuccessProperty(
-      client: OpenSearchClient,
+      client: PropTestClient,
       queryContext: QueryContext
   ): Prop = {
     val gen = SelectQueryGenerator.from(queryContext)
-    val propClient = PropTestClient(client)
 
     Prop.forAll(gen) { (q: SelectQuery) =>
       {
         val query = q.serialize()
-        val result = propClient.runSqlQuery(query)
+        val result = client.runSqlQuery(query)
         val errorReport: String =
           ResultFormatter.formatErrorDetail(query, result)
         errorReport |: result("status").num.toInt == 200
@@ -27,16 +26,15 @@ object CrashProperties {
   }
 
   def makePplQuerySuccessProperty(
-      client: OpenSearchClient,
+      client: PropTestClient,
       queryContext: QueryContext
   ): Prop = {
     val gen = SourceQueryGenerator.from(queryContext)
-    val propClient = PropTestClient(client)
 
     Prop.forAll(gen) { (q: SourceQuery) =>
       {
         val query = q.serialize()
-        val result = propClient.runPplQuery(query)
+        val result = client.runPplQuery(query)
         val errorReport: String =
           ResultFormatter.formatErrorDetail(query, result)
         errorReport |: result.obj.get("error").isEmpty
