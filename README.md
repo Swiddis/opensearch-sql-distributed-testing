@@ -14,7 +14,7 @@ as "the system doesn't crash," but could also analyze behaviors like "sorted que
 sorted results." Once properties are defined, the framework generates a large amount of test cases,
 and ensures the system maintains these properties under all cases.
 
-Or more succently described by David Maclver, the author of
+Or more succinctly described by David Maclver, the author of
 [Hypothesis](https://hypothesis.works/articles/what-is-property-based-testing/):
 > Property based testing is the construction of tests such that, when these tests are fuzzed,
 > failures in the test reveal problems with the system under test that could not have been revealed
