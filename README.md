@@ -14,11 +14,7 @@ as "the system doesn't crash," but could also analyze behaviors like "sorted que
 sorted results." Once properties are defined, the framework generates a large amount of test cases,
 and ensures the system maintains these properties under all cases.
 
-Or more succinctly described by David Maclver, the author of
-[Hypothesis](https://hypothesis.works/articles/what-is-property-based-testing/):
-> Property based testing is the construction of tests such that, when these tests are fuzzed,
-> failures in the test reveal problems with the system under test that could not have been revealed
-> by direct fuzzing of that system.
+For a more detailed definition with examples, check out the [Dynamic Testing Primer](./docs/primer.md).
 
 At the time of writing, the emphasis of the project is on the OpenSearch SQL plugin. See some of the
 original context and motivation in the [related RFC](https://github.com/opensearch-project/sql/issues/3220).
