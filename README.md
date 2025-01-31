@@ -1,9 +1,9 @@
-# OpenSearch Distributed Testing Framework
+# OpenSearch Dynamic Testing Framework
 
 > [!IMPORTANT]
 > Not (yet) an official OpenSearch repository. This is an early work in progress implementation.
 
-The Distributed Testing Framework (DistTest) is a system for running scaled property-based tests
+The Dynamic Testing Framework (DyTest) is a system for running scaled property-based tests
 for the OpenSearch project.
 
 ## Introduction
