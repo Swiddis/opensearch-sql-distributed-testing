@@ -24,6 +24,11 @@ case class SelectQuery(
   override def toString: String = {
     this.serialize()
   }
+
+  /** Create a new copy of this query, but replace the WHERE clause.
+    */
+  def withWhere(replacementWhere: Option[Expr[SqlBoolean]]): SelectQuery =
+    SelectQuery(this.index, this.fields, replacementWhere)
 }
 
 object SelectQueryGenerator {

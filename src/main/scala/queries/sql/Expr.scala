@@ -29,7 +29,7 @@ sealed trait Expr[T]:
     * queries tend to not be very useful.
     *
     * TODO instead of having this be a flag, we should use a ExprProperties
-    *  class. Will keep this until we need more props.
+    * class. Will keep this until we need more props.
     *
     * @return
     *   whether the current expression evaluates to a constant.

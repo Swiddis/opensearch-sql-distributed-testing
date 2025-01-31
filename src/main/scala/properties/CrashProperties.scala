@@ -1,7 +1,6 @@
 package properties
 
 import datagen.QueryContext
-import org.opensearch.client.opensearch.OpenSearchClient
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
 import queries.ppl.{SourceQuery, SourceQueryGenerator}

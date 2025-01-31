@@ -26,8 +26,11 @@ object ContextExprGen {
 
       Gen.oneOf(
         next,
-        ExprGen.unaryOp(List("-1"), next),
-        ExprGen.binaryOp(List("$1 + $2", "$1 - $2"), next)
+        ExprGen.unaryOp(List("-$1"), next),
+        ExprGen.binaryOp(
+          List("$1 + $2", "$1 - $2", "$1 * $2"),
+          next
+        )
       )
     }
   }

@@ -7,7 +7,7 @@ import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
-import properties.{CrashProperties, PropTestClient}
+import properties.{CrashProperties, PropTestClient, TlpProperties}
 
 /** Makes an educated guess on a good number of threads to use for property
   * checking. A decent handful of threads per processor since we're bound by
@@ -79,7 +79,7 @@ def check(property: Prop): Test.Result = {
   Test.check(
     Test.Parameters.defaultVerbose
       .withWorkers(workers)
-      .withMinSuccessfulTests(1000),
+      .withMinSuccessfulTests(100),
     property
   )
 }
@@ -108,8 +108,9 @@ def runPropertyBatch(
 
 @main def run(): Unit = {
   val properties = List(
-    CrashProperties.makeSqlQuerySuccessProperty,
-    CrashProperties.makePplQuerySuccessProperty
+//    CrashProperties.makeSqlQuerySuccessProperty,
+//    CrashProperties.makePplQuerySuccessProperty,
+    TlpProperties.makeSqlTlpWhereProperty,
   )
 
   runPropertyBatch(properties)
