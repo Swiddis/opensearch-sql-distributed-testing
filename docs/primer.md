@@ -33,7 +33,7 @@ Property-based tests look more like this:
 
 To keep the example as simple as possible, let’s write a Python sorting function with a blatantly obvious bug:
 
-```
+```py
 def sort(ls: list[int]) -> list[int]:
     ls.sort()
     # Swap the first 2 elements if the first element is negative
@@ -44,14 +44,14 @@ def sort(ls: list[int]) -> list[int]:
 
 Now we’re going to write a property-based test that makes sure our sort function works:
 
-```
-**from hypothesis import given
+```py
+from hypothesis import given
 from hypothesis.strategies import lists, integers
 
-@given**(lists(integers()))
+@given(lists(integers()))
 def test_sort_is_sorted(ls: list[int]):
     result = sort(ls)
-    *# Assert the list is sorted*
+    # Assert the list is sorted
     assert all(a <= b for a, b in zip(result, result[1:]))
 ```
 
@@ -85,7 +85,7 @@ That’s what property-based testing feels like: we have a property that we test
 I want to take a moment to call out two things:
 
 * Property-based tests are not a big list of generated test cases. This is *one* test that is run many times. The test report only contains one failing example for each distinct bug, not a report of every test that was run. (Indeed, they’re actually the shortest *possible* reproducers for each bug, due to a process called “shrinking.”)
-* In this case, fixing the bugs is trivial. If, instead of fixing the bugs, we wanted to avoid the tests triggering the bugs in the first place, we would need to make the input generation code more complicated. [1]
+* In this case, fixing the bugs is trivial. If, instead of fixing the bugs, we wanted to avoid the tests triggering the bugs in the first place, we would need to make the input generation code more complicated.[^1]
 
 ## What is Context-Sensitive Query Generation?
 
@@ -107,7 +107,7 @@ The process has a lot of preamble, but at the time of writing, similar to the Hy
 
 **tl;dr:** It’s a simple property for testing queries, which is surprisingly effective at finding bugs. The details aren’t important.
 
-I use the term TLP a lot. It’s really just one example of a mathematical property that SQL queries must uphold [2], the fact that I use it as an example doesn’t have much significance other than that it exists in the intersection between “easy to implement” and “finds lots of bugs.”
+I use the term TLP a lot. It’s really just one example of a mathematical property that SQL queries must uphold[^2], the fact that I use it as an example doesn’t have much significance other than that it exists in the intersection between “easy to implement” and “finds lots of bugs.”
 
 The idea is that each SQL query *q* can be split into 3 parts, for some boolean proposition *p*.
 
@@ -136,9 +136,6 @@ There are other ways to apply a very similar principle to more complicated queri
 I renamed it to Dynamic Testing for clarity.
 
 The repo still has the old name in the link to avoid breaking all the links, but ultimately I think that the concepts outlined above are more important than the part where we find tricks to change the number of run cycles from 10^2 to 10^6. At the time I thought scaling would be the hard part, but in practice we ended up finding bugs after 8 cycles, not thousands.
-* * *
-Footnotes
 
-[1]: In the specific case we can simply write `lists(integers(min_value=0), min_size=1)`, Hypothesis is a powerful library. For most real bugs this isn’t so simple — imagine for a more cleverly hidden sorting bug trying to write “generate only the lists that don’t trigger that bug.” Pretty much any implementation would end up excluding too many lists. (Even this trivial example accidentally excludes large negative lists with duplicate minimum values.)
-
-[2]: For PPL, we need to use quaternary logic, since there’s both `NULL` and `MISSING`. The same idea applies.
+[^1]: In the specific case we can simply write `lists(integers(min_value=0), min_size=1)`, Hypothesis is a powerful library. For most real bugs this isn’t so simple — imagine for a more cleverly hidden sorting bug trying to write “generate only the lists that don’t trigger that bug.” Pretty much any implementation would end up excluding too many lists. (Even this trivial example accidentally excludes large negative lists with duplicate minimum values.)
+[^2]: For PPL, we need to use quaternary logic, since there’s both `NULL` and `MISSING`. The same idea applies.
