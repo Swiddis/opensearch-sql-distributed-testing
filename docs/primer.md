@@ -105,7 +105,7 @@ The process has a lot of preamble, but at the time of writing, similar to the Hy
 
 ## What is Ternary Logic Partitioning?
 
-**tl;dr:** It’s a simple property for testing queries, which is surprisingly effective at finding bugs. The details aren’t important.
+**tl;dr:** It’s a simple property for testing queries, which is surprisingly effective at finding bugs. The details aren’t critical, but included here for completeness.
 
 I use the term TLP a lot. It’s really just one example of a mathematical property that SQL queries must uphold[^2], the fact that I use it as an example doesn’t have much significance other than that it exists in the intersection between “easy to implement” and “finds lots of bugs.”
 
