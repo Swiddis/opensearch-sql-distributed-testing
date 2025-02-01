@@ -17,7 +17,7 @@ This document tries to briefly explain, with examples:
 
 **tl;dr:** Test by finding properties that apply to all valid inputs, instead of trying to specify input-output pairs.
 
-I’m going to use the Python library [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) as a reference here. While Python-specific, they have some of the best introductory documentation for these concepts that I’m aware of, so I’d recommend them for more information. The DistTest framework is built on [ScalaCheck](https://scalacheck.org/), which uses the same idea.
+I’m going to use the Python library [Hypothesis](https://hypothesis.readthedocs.io/en/latest/) as a reference here. While Python-specific, they have some of the best introductory documentation for these concepts that I’m aware of, so I’d recommend them for more information. The dynamic testing framework is built on [ScalaCheck](https://scalacheck.org/), which uses the same idea.
 
 Normal unit tests follow an arrange-act-assert pattern:
 
