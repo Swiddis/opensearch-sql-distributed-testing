@@ -47,6 +47,8 @@ generator and replace any non-applicable parts.
 ## Typed Expressions
 
 Query shapes are some of the story, but arguably the bulk of the features are for expressions.
+This is partly because it's where a lot of SQL logic happens, and partly because TLP and NoREC
+are very where-clause focused.
 
 For results to make sense, we want to generate strongly-typed expressions. For instance, an earlier
 version of the SQL generator once yielded `SELECT * FROM test WHERE 1 - FALSE`.
