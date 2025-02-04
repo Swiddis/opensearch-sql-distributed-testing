@@ -103,6 +103,8 @@ Here’s a brief rundown of how we run test cases for OpenSearch SQL (and equiva
 
 The process has a lot of preamble, but at the time of writing, similar to the Hypothesis example, *all of step 5 is just one test per language*. In the specific case, we expect to get a 200 result for valid queries. We then run that test a few hundred times.
 
+If you want to add more query generation capabilities, check [Adding Query Features](./adding-query-features.md).
+
 ## What is Ternary Logic Partitioning?
 
 **tl;dr:** It’s a simple property for testing queries, which is surprisingly effective at finding bugs. The details aren’t critical, but included here for completeness.
