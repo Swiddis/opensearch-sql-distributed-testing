@@ -77,7 +77,7 @@ object ExprGen {
 }
 ```
 
-How here's a simplified version of our boolean expression generator:
+Now here's a simplified version of our boolean expression generator:
 
 ```scala 3
 def intExpr(context: IndexContext): Gen[Expr[Int]] =
