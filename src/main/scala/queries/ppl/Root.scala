@@ -21,7 +21,7 @@ case class SourceQuery(
   }
 
   /** Create a new copy of this query, but replace the WHERE clause.
-   */
+    */
   def withWhere(replacementWhere: Option[PplExpr[PplBoolean]]): SourceQuery =
     SourceQuery(this.index, replacementWhere)
 }

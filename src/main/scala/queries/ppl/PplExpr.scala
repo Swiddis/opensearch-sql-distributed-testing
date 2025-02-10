@@ -67,13 +67,19 @@ object ExprGen {
   def column[T](names: Seq[String]): Gen[PplExpr[T]] =
     Gen.oneOf(names).map(Column(_))
 
-  def unaryOp[A, B](ops: Seq[String], argGen: Gen[PplExpr[A]]): Gen[PplExpr[B]] =
+  def unaryOp[A, B](
+      ops: Seq[String],
+      argGen: Gen[PplExpr[A]]
+  ): Gen[PplExpr[B]] =
     for {
       op <- Gen.oneOf(ops)
       arg <- argGen
     } yield UnaryOp(op, arg)
 
-  def binaryOp[A, B](ops: Seq[String], argGen: Gen[PplExpr[A]]): Gen[PplExpr[B]] =
+  def binaryOp[A, B](
+      ops: Seq[String],
+      argGen: Gen[PplExpr[A]]
+  ): Gen[PplExpr[B]] =
     for {
       left <- argGen
       op <- Gen.oneOf(ops)

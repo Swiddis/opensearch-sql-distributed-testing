@@ -59,13 +59,14 @@ def runPropertyBatch(
   val qContext = QueryContext(NonEmptyList(iContext, List()))
   System.out.println(s"Running batch using index: $iContext")
 
-  for (property <- properties) Test.check(
-    Test.Parameters.defaultVerbose
-      .withWorkers(workerCount())
-      .withMinSuccessfulTests(100)
-      .withTestCallback(PropLogger),
-    property(propClient, qContext)
-  )
+  for (property <- properties)
+    Test.check(
+      Test.Parameters.defaultVerbose
+        .withWorkers(workerCount())
+        .withMinSuccessfulTests(100)
+        .withTestCallback(PropLogger),
+      property(propClient, qContext)
+    )
 }
 
 @main def run(): Unit = {
