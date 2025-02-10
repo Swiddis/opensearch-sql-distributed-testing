@@ -72,7 +72,9 @@ object TlpProperties {
         )
 
         val partSizes =
-          results.tail.map(p => p("datarows").arr.length.toString).mkString(" + ")
+          results.tail
+            .map(p => p("datarows").arr.length.toString)
+            .mkString(" + ")
         s"${qRes.size} != $partSizes" |: multisetEquality(qRes, partRes)
     }
   }

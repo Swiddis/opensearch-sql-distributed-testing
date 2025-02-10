@@ -44,7 +44,8 @@ in a single-node configuration.
 
 ### Testing
 
-The project is the tests. It's not clear yet what the failure modes of the project itself are.
+You can also run tests with `sbt test`. At the time of writing, this is practically equivalent to `sbt run`, but with
+arguably nicer output.
 
 ## Contributing
 
