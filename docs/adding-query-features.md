@@ -16,7 +16,7 @@ queries. These shapes may rely on different sub-generators.
 To support query generation, you need two things: serialization logic, and a generator.
 - Serialization logic is done by implementing the `QuerySerializable` trait, for the most part we
   supply this with separated `case class`es which serialize with templates. Example:
-  [`queries.sql.Expr`](../src/main/scala/queries/sql/Expr.scala).
+  [`queries.sql.SqlExpr`](../src/main/scala/queries/sql/SqlExpr.scala).
 - Generators are instances of `org.scalacheck.Gen` which use a `QueryContext` to for type-safety.
   The [ScalaCheck user guide](https://github.com/typelevel/scalacheck/blob/main/doc/UserGuide.md)
   has a lot of information on how to build generators. Example:

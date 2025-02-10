@@ -20,21 +20,21 @@ type PplBoolean = PplNull | Boolean
   *   The type that the expression evaluates to, used to avoid cases like `WHERE
   *   -NULL`.
   */
-sealed trait Expr[T]:
+sealed trait PplExpr[T]:
   def serialize(): String
 
-case class Literal[T](value: T) extends Expr[T]:
+case class Literal[T](value: T) extends PplExpr[T]:
   override def serialize(): String =
     value.toString.toUpperCase // Literals tend to be upper: NULL, FALSE, 1.5E6
 
-case class Column[T](name: String) extends Expr[T]:
+case class Column[T](name: String) extends PplExpr[T]:
   override def serialize(): String = name
 
-case class UnaryOp[A, B](op: String, arg: Expr[A]) extends Expr[B]:
+case class UnaryOp[A, B](op: String, arg: PplExpr[A]) extends PplExpr[B]:
   override def serialize(): String = op.replace("$1", arg.serialize())
 
-case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A])
-    extends Expr[B]:
+case class BinaryOp[A, B](left: PplExpr[A], op: String, right: PplExpr[A])
+    extends PplExpr[B]:
   /** To avoid generating too many redundant parentheses, we only add
     * parentheses around the sides of binary operations where order is more
     * likely to matter.
@@ -42,7 +42,7 @@ case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A])
     * @see
     *   https://github.com/opensearch-project/sql/issues/3272
     */
-  private def serializeWithMaybeParens(ex: Expr[A]): String = {
+  private def serializeWithMaybeParens(ex: PplExpr[A]): String = {
     ex match {
       case BinaryOp(left, op, right) => "(" + ex.serialize() + ")"
       case _                         => ex.serialize()
@@ -62,18 +62,18 @@ case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A])
   * also be treated as a unary operation, as with function calls.
   */
 object ExprGen {
-  def literal[T](gen: Gen[T]): Gen[Expr[T]] = gen.map(Literal(_))
+  def literal[T](gen: Gen[T]): Gen[PplExpr[T]] = gen.map(Literal(_))
 
-  def column[T](names: Seq[String]): Gen[Expr[T]] =
+  def column[T](names: Seq[String]): Gen[PplExpr[T]] =
     Gen.oneOf(names).map(Column(_))
 
-  def unaryOp[A, B](ops: Seq[String], argGen: Gen[Expr[A]]): Gen[Expr[B]] =
+  def unaryOp[A, B](ops: Seq[String], argGen: Gen[PplExpr[A]]): Gen[PplExpr[B]] =
     for {
       op <- Gen.oneOf(ops)
       arg <- argGen
     } yield UnaryOp(op, arg)
 
-  def binaryOp[A, B](ops: Seq[String], argGen: Gen[Expr[A]]): Gen[Expr[B]] =
+  def binaryOp[A, B](ops: Seq[String], argGen: Gen[PplExpr[A]]): Gen[PplExpr[B]] =
     for {
       left <- argGen
       op <- Gen.oneOf(ops)

@@ -8,7 +8,7 @@ import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
 import properties.observability.PropLogger
-import properties.{CrashProperties, PropTestClient, TlpProperties}
+import properties.{CrashProperties, PropTestClient, SqlTlpProperties}
 
 /** Load an OpenSearch client to be used in testing.
   *

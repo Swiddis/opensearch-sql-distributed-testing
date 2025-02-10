@@ -8,7 +8,7 @@ import queries.QuerySerializable
 case class SelectQuery(
     index: String,
     fields: List[String],
-    where: Option[Expr[SqlBoolean]]
+    where: Option[SqlExpr[SqlBoolean]]
 ) extends QuerySerializable {
   override def serialize(): String = {
     val fieldNames = if (fields.isEmpty) "*" else fields.mkString("", ", ", "")
@@ -27,7 +27,7 @@ case class SelectQuery(
 
   /** Create a new copy of this query, but replace the WHERE clause.
     */
-  def withWhere(replacementWhere: Option[Expr[SqlBoolean]]): SelectQuery =
+  def withWhere(replacementWhere: Option[SqlExpr[SqlBoolean]]): SelectQuery =
     SelectQuery(this.index, this.fields, replacementWhere)
 }
 

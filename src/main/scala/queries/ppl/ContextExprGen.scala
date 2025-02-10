@@ -10,7 +10,7 @@ object ContextExprGen {
 
   /** Produce a generator for integer expressions.
     */
-  def intExpr(context: IndexContext, depth: Int): Gen[Expr[Int]] = {
+  def intExpr(context: IndexContext, depth: Int): Gen[PplExpr[Int]] = {
     if (depth <= 0) {
       // We duplicate literal as a convenient fallback if no relevant fields are available
       val availableFields = context.fieldsWithType(OpenSearchDataType.Integer)
@@ -34,7 +34,7 @@ object ContextExprGen {
 
   /** Produce a generator for boolean expressions
     */
-  def boolExpr(context: IndexContext, depth: Int): Gen[Expr[PplBoolean]] = {
+  def boolExpr(context: IndexContext, depth: Int): Gen[PplExpr[PplBoolean]] = {
     if (depth <= 0) {
       val availableFields = context.fieldsWithType(OpenSearchDataType.Boolean)
       val literal = ExprGen.literal(

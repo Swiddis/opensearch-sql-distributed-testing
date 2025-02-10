@@ -6,7 +6,7 @@ import queries.QuerySerializable
 
 case class SourceQuery(
     index: String,
-    where: Option[Expr[PplBoolean]]
+    where: Option[PplExpr[PplBoolean]]
 ) extends QuerySerializable {
   override def serialize(): String = {
     val whereClause = where match {
@@ -19,6 +19,11 @@ case class SourceQuery(
   override def toString: String = {
     this.serialize()
   }
+
+  /** Create a new copy of this query, but replace the WHERE clause.
+   */
+  def withWhere(replacementWhere: Option[PplExpr[PplBoolean]]): SourceQuery =
+    SourceQuery(this.index, replacementWhere)
 }
 
 object SourceQueryGenerator {

@@ -6,7 +6,7 @@ import org.apache.hc.core5.http.HttpHost
 import org.opensearch.client.json.jackson.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
-import properties.{CrashProperties, PropTestClient, TlpProperties}
+import properties.{CrashProperties, PplTlpProperties, PropTestClient, SqlTlpProperties}
 
 import scala.compiletime.uninitialized
 
@@ -20,6 +20,7 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
     super.scalaCheckTestParameters
       .withMinSuccessfulTests(1000)
       .withWorkers(workerCount())
+      .withMaxDiscardRatio(0.1)
 
   override def beforeAll(): Unit = {
     client = openSearchClient()
@@ -56,7 +57,11 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
     CrashProperties.makePplQuerySuccessProperty(propClient, queryContext)
   }
 
-  property("simple SQL SELECT statements satisfy TLP") {
-    TlpProperties.makeSqlTlpWhereProperty(propClient, queryContext)
+  property("simple SQL SELECT-WHERE statements satisfy TLP") {
+    SqlTlpProperties.makeSimpleTlpWhereProperty(propClient, queryContext)
+  }
+
+  property("simple PPL SOURCE-WHERE statements satisfy TLP".ignore) {
+    PplTlpProperties.makeSimpleTlpWhereProperty(propClient, queryContext)
   }
 }

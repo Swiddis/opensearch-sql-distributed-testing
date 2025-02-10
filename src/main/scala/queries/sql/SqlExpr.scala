@@ -22,7 +22,7 @@ type SqlBoolean = SqlNull | Boolean
   *   The type that the expression evaluates to, used to avoid cases like
   *   `SELECT * WHERE -NULL`.
   */
-sealed trait Expr[T]:
+sealed trait SqlExpr[T]:
   def serialize(): String
 
   /** Useful for filtering constant clause generation, since `WHERE FALSE`-like
@@ -36,21 +36,21 @@ sealed trait Expr[T]:
     */
   def isConstant: Boolean
 
-case class Literal[T](value: T) extends Expr[T]:
+case class Literal[T](value: T) extends SqlExpr[T]:
   override def serialize(): String =
     value.toString.toUpperCase // Literals tend to be upper: NULL, FALSE, 1.5E6
   override def isConstant: Boolean = true
 
-case class Column[T](name: String) extends Expr[T]:
+case class Column[T](name: String) extends SqlExpr[T]:
   override def serialize(): String = name
   override def isConstant: Boolean = false
 
-case class UnaryOp[A, B](op: String, arg: Expr[A]) extends Expr[B]:
+case class UnaryOp[A, B](op: String, arg: SqlExpr[A]) extends SqlExpr[B]:
   override def serialize(): String = op.replace("$1", arg.serialize())
   override def isConstant: Boolean = arg.isConstant
 
-case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A])
-    extends Expr[B]:
+case class BinaryOp[A, B](left: SqlExpr[A], op: String, right: SqlExpr[A])
+    extends SqlExpr[B]:
   // We always wrap binary ops in parentheses to make precedence "just work"
   override def serialize(): String =
     "(" + op
@@ -66,18 +66,18 @@ case class BinaryOp[A, B](left: Expr[A], op: String, right: Expr[A])
   * also be treated as a unary operation, as with function calls.
   */
 object ExprGen {
-  def literal[T](gen: Gen[T]): Gen[Expr[T]] = gen.map(Literal(_))
+  def literal[T](gen: Gen[T]): Gen[SqlExpr[T]] = gen.map(Literal(_))
 
-  def column[T](names: Seq[String]): Gen[Expr[T]] =
+  def column[T](names: Seq[String]): Gen[SqlExpr[T]] =
     Gen.oneOf(names).map(Column(_))
 
-  def unaryOp[A, B](ops: Seq[String], argGen: Gen[Expr[A]]): Gen[Expr[B]] =
+  def unaryOp[A, B](ops: Seq[String], argGen: Gen[SqlExpr[A]]): Gen[SqlExpr[B]] =
     for {
       op <- Gen.oneOf(ops)
       arg <- argGen
     } yield UnaryOp(op, arg)
 
-  def binaryOp[A, B](ops: Seq[String], argGen: Gen[Expr[A]]): Gen[Expr[B]] =
+  def binaryOp[A, B](ops: Seq[String], argGen: Gen[SqlExpr[A]]): Gen[SqlExpr[B]] =
     for {
       left <- argGen
       op <- Gen.oneOf(ops)
