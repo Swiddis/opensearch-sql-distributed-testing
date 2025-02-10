@@ -43,17 +43,6 @@ object SqlTlpProperties {
         .reduce((l, r) => l && r)
 
       isQuerySuccessful ==> finalizeTlpResult(results)
-//          val (qRes, partRes) = (
-//            results.head("datarows").arr.toList,
-//            results.tail.flatMap(r => r("datarows").arr)
-//          )
-//
-//          val partSizes =
-//            results.tail
-//              .map(p => p("datarows").arr.length.toString)
-//              .mkString(" + ")
-//          s"${qRes.size} != $partSizes" |: multisetEquality(qRes, partRes)
-//        }
     }
   }
 }
