@@ -59,8 +59,8 @@ object TlpProperties {
         val parts = partitionOnWhere(query)
         val results = parts.map(q => client.runSqlQuery(q.serialize()))
 
-        // TODO if a partition errors, we just ignore the case entirely (using implication ==>).
-        //  When CrashProperties starts failing less, let's replace this with actual error handling.
+        // If a partition errors, we just discard the case entirely (using implication ==>)
+        // ScalaCheck will fail if the discard rate gets too high
         val isQuerySuccessful = results
             .map(res => res("status").num == 200)
             .reduce((l, r) => l && r)
