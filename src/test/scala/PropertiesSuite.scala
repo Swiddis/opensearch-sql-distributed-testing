@@ -56,7 +56,7 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
     CrashProperties.makePplQuerySuccessProperty(propClient, queryContext)
   }
 
-  property("passes TLP for simple SQL SELECT statements") {
+  property("simple SQL SELECT statements satisfy TLP") {
     TlpProperties.makeSqlTlpWhereProperty(propClient, queryContext)
   }
 }

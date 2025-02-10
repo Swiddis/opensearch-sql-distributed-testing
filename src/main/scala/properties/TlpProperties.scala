@@ -59,23 +59,24 @@ object TlpProperties {
         val parts = partitionOnWhere(query)
         val results = parts.map(q => client.runSqlQuery(q.serialize()))
 
-        // TODO if a partition errors, we just ignore the case entirely.
+        // TODO if a partition errors, we just ignore the case entirely (using implication ==>).
         //  When CrashProperties starts failing less, let's replace this with actual error handling.
-        if results
-            .map(res => res("status").num != 200)
-            .reduce((l, r) => l || r)
-        then break("ignored error" |: true)
+        val isQuerySuccessful = results
+            .map(res => res("status").num == 200)
+            .reduce((l, r) => l && r)
 
-        val (qRes, partRes) = (
-          results.head("datarows").arr.toList,
-          results.tail.flatMap(r => r("datarows").arr)
-        )
+        isQuerySuccessful ==> {
+          val (qRes, partRes) = (
+            results.head("datarows").arr.toList,
+            results.tail.flatMap(r => r("datarows").arr)
+          )
 
-        val partSizes =
-          results.tail
-            .map(p => p("datarows").arr.length.toString)
-            .mkString(" + ")
-        s"${qRes.size} != $partSizes" |: multisetEquality(qRes, partRes)
+          val partSizes =
+            results.tail
+              .map(p => p("datarows").arr.length.toString)
+              .mkString(" + ")
+          s"${qRes.size} != $partSizes" |: multisetEquality(qRes, partRes)
+        }
     }
   }
 }
