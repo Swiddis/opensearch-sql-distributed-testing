@@ -12,7 +12,6 @@ import queries.sql.{
 }
 
 import scala.util.boundary
-import scala.util.boundary.break
 
 /** Bundles property constructors for properties related to Ternary Logic
   * Partitioning. Check out the primer doc for details: `[root]/docs/primer.md`.
@@ -27,13 +26,7 @@ object TlpProperties {
           query.withWhere(Some(UnaryOp("NOT ($1)", q))),
           query.withWhere(Some(UnaryOp("($1) IS NULL", q)))
         )
-      case None =>
-        List(
-          query.withWhere(None),
-          query.withWhere(Some(Literal(true))),
-          query.withWhere(Some(Literal(false))),
-          query.withWhere(Some(Literal(SqlNull())))
-        )
+      case None => throw IllegalArgumentException("partitionOnWhere requested for missing WHERE clause. This is a bug")
     }
   }
 
