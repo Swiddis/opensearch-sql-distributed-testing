@@ -10,7 +10,7 @@ object SqlNoRecProperties {
       client: PropTestClient,
       queryContext: QueryContext
   ): Prop = {
-    val gen = SelectQueryGenerator.from(queryContext)
+    val gen = SelectQueryGenerator.fromWhere(queryContext)
 
     Prop.forAll(gen) { (q: SelectQuery) =>
       {

@@ -74,4 +74,8 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
   property("simple SQL SELECT-WHERE statements satisfy NoREC") {
     SqlNoRecProperties.makeSqlNoRecWhereProperty(propClient, queryContext)
   }
+
+  property("aggregate SUM SQL statements satisfy TLP") {
+    SqlTlpProperties.makeAggregateSumTlpProperty(propClient, queryContext)
+  }
 }
