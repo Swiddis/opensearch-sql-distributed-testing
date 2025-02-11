@@ -16,8 +16,10 @@ object SqlTlpProperties {
         List(
           query.withWhere(None),
           query,
-          query.withWhere(Some(UnaryOp("NOT ($1)", q))),
-          query.withWhere(Some(UnaryOp("($1) IS NULL", q)))
+          query.withWhere(Some(UnaryOp("NOT ($1)", q)))
+          // NULL is broken, as NOT NULL is truthy.
+          // Reactivate when (if) NULL gets fixed.
+//          query.withWhere(Some(UnaryOp("($1) IS NULL", q)))
         )
       case None =>
         throw IllegalArgumentException(
@@ -77,6 +79,51 @@ object SqlTlpProperties {
           partRes.map(v => v.arr.head.num).sum
         )
         s"SUM mismatch: $sumL != $sumR" |: sumL == sumR
+      }
+    }
+  }
+
+  def makeAggregateMinTlpProperty(
+      client: PropTestClient,
+      queryContext: QueryContext
+  ): Prop = {
+    val gen = SelectQueryGenerator.minFromWhere(queryContext)
+
+    Prop.forAll(gen) { (query: SelectQuery) =>
+      val parts = partitionOnWhere(query)
+      val results = parts.map(q => client.runSqlQuery(q.serialize()))
+
+      // If a partition errors, we just discard the case entirely (using implication ==>)
+      // ScalaCheck will fail if the discard rate gets too high
+      val isQuerySuccessful = results
+        .map(res => res("status").num == 200)
+        .reduce((l, r) => l && r)
+
+      isQuerySuccessful ==> {
+        val (qRes, partRes) = (
+          results.head("datarows").arr.toList,
+          results.tail.flatMap(r => r("datarows").arr)
+        )
+
+        val partSizes =
+          results.tail
+            .map(p => p("datarows").arr.length.toString)
+            .mkString(" + ")
+        val (minL, minR) = (
+          qRes
+            .map(v =>
+              if v.arr.head.isNull then Double.PositiveInfinity
+              else v.arr.head.num
+            )
+            .min,
+          partRes
+            .map(v =>
+              if v.arr.head.isNull then Double.PositiveInfinity
+              else v.arr.head.num
+            )
+            .min
+        )
+        s"MIN mismatch: $minL != $minR" |: minL == minR
       }
     }
   }

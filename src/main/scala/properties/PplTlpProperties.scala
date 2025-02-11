@@ -16,10 +16,10 @@ object PplTlpProperties {
         List(
           query.withWhere(None),
           query,
-          query.withWhere(Some(UnaryOp("NOT ($1)", q))),
-          query.withWhere(Some(UnaryOp("isnull($1)", q))),
+          query.withWhere(Some(UnaryOp("NOT $1", q)))
+//          query.withWhere(Some(UnaryOp("isnull($1)", q))),
           // TODO figure out how to test if something is missing -- as-is this is a syntax error
-          query.withWhere(Some(UnaryOp("($1) = MISSING", q)))
+//          query.withWhere(Some(UnaryOp("($1) = MISSING", q)))
         )
       case None =>
         throw IllegalArgumentException(

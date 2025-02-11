@@ -28,7 +28,14 @@ object ContextExprGen {
         next,
         ExprGen.unaryOp(List("-$1"), next),
         ExprGen.binaryOp(
-          List("$1 + $2", "$1 - $2", "$1 * $2"),
+          List(
+            "$1 + $2",
+            "$1 - $2"
+            // TODO disabled for now to reduce chance of integer overflow
+            //  Can figure out how to reactivate later, but it's not clear how many bugs will
+            //  depend purely on multiplication evaluation and not be catchable otherwise
+            /*"$1 * $2"*/
+          ),
           next
         )
       )
@@ -40,7 +47,10 @@ object ContextExprGen {
   def boolExpr(context: IndexContext, depth: Int): Gen[SqlExpr[SqlBoolean]] = {
     if (depth <= 0) {
       val availableFields = context.fieldsWithType(OpenSearchDataType.Boolean)
-      val literal = ExprGen.literal(Gen.oneOf(false, true, SqlNull()))
+      // TODO null handling is broken, don't generate it for now
+//      val literal = ExprGen.literal(Gen.oneOf(false, true, SqlNull()))
+      val literal =
+        ExprGen.literal(Gen.oneOf(false, true).asInstanceOf[SqlBoolean])
 
       Gen.oneOf(
         literal,

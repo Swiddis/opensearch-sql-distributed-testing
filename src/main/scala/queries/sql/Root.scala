@@ -63,6 +63,7 @@ object SelectQueryGenerator {
   ): Gen[SelectQuery] = {
     for {
       index <- Gen.oneOf(context.indices.toList)
+      // TODO handle empty case
       field <- Gen.oneOf(index.fieldsWithType(Integer))
       whereClause <- Gen.some(ContextExprGen.boolExpr(index, 3))
     } yield SelectQuery(index.name, List(s"$aggregate($field)"), whereClause)

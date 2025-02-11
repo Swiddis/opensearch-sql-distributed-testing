@@ -78,4 +78,8 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
   property("aggregate SUM SQL statements satisfy TLP") {
     SqlTlpProperties.makeAggregateSumTlpProperty(propClient, queryContext)
   }
+
+  property("aggregate MIN SQL statements satisfy TLP") {
+    SqlTlpProperties.makeAggregateMinTlpProperty(propClient, queryContext)
+  }
 }
