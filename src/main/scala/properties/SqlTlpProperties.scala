@@ -60,8 +60,7 @@ object SqlTlpProperties {
       case Aggregate.MAX   => SelectQueryGenerator.maxFromWhere(queryContext)
       case Aggregate.SUM   => SelectQueryGenerator.sumFromWhere(queryContext)
       case Aggregate.COUNT => SelectQueryGenerator.countFromWhere(queryContext)
-      // For AVG, we use custom aggregation since it gets complicated
-      case Aggregate.AVG =>
+      case _ =>
         throw IllegalArgumentException(s"unimplemented aggregate: $aggregate")
 
     Prop.forAll(gen) { (query: SelectQuery) =>
