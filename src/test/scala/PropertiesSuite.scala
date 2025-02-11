@@ -10,6 +10,7 @@ import properties.{
   CrashProperties,
   PplTlpProperties,
   PropTestClient,
+  SqlNoRecProperties,
   SqlTlpProperties
 }
 
@@ -68,5 +69,9 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
 
   property("simple PPL SOURCE-WHERE statements satisfy TLP".ignore) {
     PplTlpProperties.makeSimpleTlpWhereProperty(propClient, queryContext)
+  }
+
+  property("simple SQL SELECT-WHERE statements satisfy NoREC") {
+    SqlNoRecProperties.makeSqlNoRecWhereProperty(propClient, queryContext)
   }
 }

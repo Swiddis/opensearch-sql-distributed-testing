@@ -25,6 +25,9 @@ case class SelectQuery(
     this.serialize()
   }
 
+  def withFields(replacementFields: List[String]): SelectQuery =
+    SelectQuery(this.index, replacementFields, this.where)
+
   /** Create a new copy of this query, but replace the WHERE clause.
     */
   def withWhere(replacementWhere: Option[SqlExpr[SqlBoolean]]): SelectQuery =

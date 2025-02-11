@@ -1,6 +1,5 @@
 package properties
 
-import cats.data.NonEmptyList
 import ujson.Obj
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
