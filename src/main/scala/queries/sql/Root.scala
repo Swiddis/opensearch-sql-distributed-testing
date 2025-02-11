@@ -12,6 +12,7 @@ enum Aggregate:
 case class SelectQuery(
     index: String,
     fields: List[String],
+    selDistinct: Boolean,
     where: Option[SqlExpr[SqlBoolean]]
 ) extends QuerySerializable {
   override def serialize(): String = {
@@ -22,7 +23,8 @@ case class SelectQuery(
         if ex.isConstant && Testing.config.disableConstantExprs then ""
         else "WHERE " + ex.serialize()
     }
-    s"SELECT $fieldNames FROM $index $whereClause"
+    val distinct = if selDistinct then " DISTINCT" else ""
+    s"SELECT$distinct $fieldNames FROM $index $whereClause"
   }
 
   override def toString: String = {
@@ -30,12 +32,15 @@ case class SelectQuery(
   }
 
   def withFields(replacementFields: List[String]): SelectQuery =
-    SelectQuery(this.index, replacementFields, this.where)
+    SelectQuery(index, replacementFields, selDistinct, where)
 
   /** Create a new copy of this query, but replace the WHERE clause.
     */
   def withWhere(replacementWhere: Option[SqlExpr[SqlBoolean]]): SelectQuery =
-    SelectQuery(this.index, this.fields, replacementWhere)
+    SelectQuery(index, fields, selDistinct, replacementWhere)
+
+  def distinct(): SelectQuery =
+    SelectQuery(index, fields, true, where)
 }
 
 object SelectQueryGenerator {
@@ -54,10 +59,16 @@ object SelectQueryGenerator {
       index <- Gen.oneOf(context.indices.toList)
       fields <- Gen.someOf(index.fields.keys)
       whereClause <- Gen.some(ContextExprGen.boolExpr(index, 3))
-    } yield SelectQuery(index.name, fields.toList, whereClause)
+    } yield SelectQuery(index.name, fields.toList, false, whereClause)
   }
 
-  def aggregateFromWhere(
+  /** Create a generator for SELECT DISTINCT queries
+    */
+  def distinctFromWhere(context: QueryContext): Gen[SelectQuery] = {
+    for { q <- fromWhere(context) } yield q.distinct()
+  }
+
+  private def aggregateFromWhere(
       context: QueryContext,
       aggregate: Aggregate
   ): Gen[SelectQuery] = {
@@ -66,7 +77,12 @@ object SelectQueryGenerator {
       // TODO handle empty case
       field <- Gen.oneOf(index.fieldsWithType(Integer))
       whereClause <- Gen.some(ContextExprGen.boolExpr(index, 3))
-    } yield SelectQuery(index.name, List(s"$aggregate($field)"), whereClause)
+    } yield SelectQuery(
+      index.name,
+      List(s"$aggregate($field)"),
+      false,
+      whereClause
+    )
   }
 
   /** Create an aggregate query generator for SUM queries

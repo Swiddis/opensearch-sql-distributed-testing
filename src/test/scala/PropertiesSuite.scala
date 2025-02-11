@@ -67,6 +67,10 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
     SqlTlpProperties.makeSimpleTlpWhereProperty(propClient, queryContext)
   }
 
+  property("simple SQL SELECT-DISTINCT-WHERE statements satisfy TLP") {
+    SqlTlpProperties.makeDistinctTlpWhereProperty(propClient, queryContext)
+  }
+
   property("simple PPL SOURCE-WHERE statements satisfy TLP".ignore) {
     PplTlpProperties.makeSimpleTlpWhereProperty(propClient, queryContext)
   }

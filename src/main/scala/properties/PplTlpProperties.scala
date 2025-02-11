@@ -3,7 +3,7 @@ package properties
 import datagen.QueryContext
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
-import properties.PropertyUtils.{finalizeTlpResult, multisetEquality}
+import properties.PropertyUtils.multisetEquality
 import queries.ppl.{SourceQuery, SourceQueryGenerator, UnaryOp}
 
 /** Bundles property constructors for properties related to Ternary Logic
@@ -44,7 +44,18 @@ object PplTlpProperties {
         .map(res => res.obj.get("status").isEmpty)
         .reduce((l, r) => l && r)
 
-      isQuerySuccessful ==> finalizeTlpResult(results)
+      isQuerySuccessful ==> {
+        val (qRes, partRes) = (
+          results.head("datarows").arr.toList,
+          results.tail.flatMap(r => r("datarows").arr)
+        )
+
+        val partSizes =
+          results.tail
+            .map(p => p("datarows").arr.length.toString)
+            .mkString(" + ")
+        s"${qRes.size} != $partSizes" |: multisetEquality(qRes, partRes)
+      }
     }
   }
 }
