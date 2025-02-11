@@ -60,7 +60,9 @@ object SqlTlpProperties {
       case Aggregate.MAX   => SelectQueryGenerator.maxFromWhere(queryContext)
       case Aggregate.SUM   => SelectQueryGenerator.sumFromWhere(queryContext)
       case Aggregate.COUNT => SelectQueryGenerator.countFromWhere(queryContext)
-      case Aggregate.AVG   => SelectQueryGenerator.avgFromWhere(queryContext)
+      // For AVG, we use custom aggregation since it gets complicated
+      case Aggregate.AVG =>
+        throw IllegalArgumentException(s"unimplemented aggregate: $aggregate")
 
     Prop.forAll(gen) { (query: SelectQuery) =>
       val parts = partitionOnWhere(query)
@@ -78,10 +80,6 @@ object SqlTlpProperties {
           results.tail.flatMap(r => r("datarows").arr)
         )
 
-        val partSizes =
-          results.tail
-            .map(p => p("datarows").arr.length.toString)
-            .mkString(" + ")
         val (resultL, resultR) = (
           qRes.map(mapper).reduce(reducer),
           partRes.map(mapper).reduce(reducer)
@@ -143,5 +141,46 @@ object SqlTlpProperties {
       v => v.arr.head.num,
       (a, b) => a + b
     )
+  }
+
+  def makeAggregateAvgTlpProperty(
+      client: PropTestClient,
+      queryContext: QueryContext
+  ): Prop = {
+    val gen = SelectQueryGenerator.avgFromWhere(queryContext)
+
+    Prop.forAll(gen) { (query: SelectQuery) =>
+      val where = query.where.get
+      val field = query.fields.head.stripPrefix("AVG(").stripSuffix(")")
+      val parts = List(
+        query.withWhere(None),
+        query.withFields(List(s"SUM($field)", s"COUNT($field)")),
+        query
+          .withFields(List(s"SUM($field)", s"COUNT($field)"))
+          .withWhere(Some(UnaryOp("NOT ($1)", where)))
+      )
+      val results = parts.map(q => client.runSqlQuery(q.serialize()))
+
+      // If a partition errors, we just discard the case entirely (using implication ==>)
+      // ScalaCheck will fail if the discard rate gets too high
+      val isQuerySuccessful = results
+        .map(res => res("status").num == 200)
+        .reduce((l, r) => l && r)
+
+      isQuerySuccessful ==> {
+        val (qRes, partRes) = (
+          results.head("datarows").arr.toList,
+          results.tail.flatMap(r => r("datarows").arr)
+        )
+
+        val (resultL, resultR) = (
+          qRes.head.arr.head.num,
+          partRes.map(v => v.arr.head.num).sum / partRes
+            .map(v => v.arr.last.num)
+            .sum
+        )
+        s"AVG mismatch: $resultL != $resultR\nqRes = $qRes\npRes = $partRes" |: resultL == resultR
+      }
+    }
   }
 }

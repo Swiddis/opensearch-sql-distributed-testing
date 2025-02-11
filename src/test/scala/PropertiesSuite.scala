@@ -90,4 +90,8 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
   property("aggregate COUNT SQL statements satisfy TLP") {
     SqlTlpProperties.makeAggregateCountTlpProperty(propClient, queryContext)
   }
+
+  property("aggregate AVG SQL statements satisfy TLP") {
+    SqlTlpProperties.makeAggregateAvgTlpProperty(propClient, queryContext)
+  }
 }
