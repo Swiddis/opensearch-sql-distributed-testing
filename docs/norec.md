@@ -1,4 +1,4 @@
-# Non-optimizing Reference Construction (NoREC)
+# Non-optimizing Reference Engine Construction (NoREC)
 
 **Author:** [Simeon Widdis](https://github.com/Swiddis) <br>
 **Date:** February 10, 2025 <br>
