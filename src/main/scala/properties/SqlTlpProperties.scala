@@ -4,7 +4,7 @@ import datagen.QueryContext
 import org.scalacheck.Prop
 import org.scalacheck.Prop.propBoolean
 import properties.PropertyUtils.{finalizeTlpResult, multisetEquality}
-import queries.sql.{SelectQuery, SelectQueryGenerator, UnaryOp}
+import queries.sql.{Aggregate, SelectQuery, SelectQueryGenerator, UnaryOp}
 
 /** Bundles property constructors for properties related to Ternary Logic
   * Partitioning. Check out the primer doc for details: `[root]/docs/primer.md`.
@@ -48,11 +48,19 @@ object SqlTlpProperties {
     }
   }
 
-  def makeAggregateSumTlpProperty(
+  private def makeAggregateTlpProperty[T](
       client: PropTestClient,
-      queryContext: QueryContext
+      queryContext: QueryContext,
+      aggregate: Aggregate,
+      mapper: ujson.Value => T,
+      reducer: (T, T) => T
   ): Prop = {
-    val gen = SelectQueryGenerator.sumFromWhere(queryContext)
+    val gen = aggregate match
+      case Aggregate.MIN   => SelectQueryGenerator.minFromWhere(queryContext)
+      case Aggregate.MAX   => SelectQueryGenerator.maxFromWhere(queryContext)
+      case Aggregate.SUM   => SelectQueryGenerator.sumFromWhere(queryContext)
+      case Aggregate.COUNT => SelectQueryGenerator.countFromWhere(queryContext)
+      case Aggregate.AVG   => SelectQueryGenerator.avgFromWhere(queryContext)
 
     Prop.forAll(gen) { (query: SelectQuery) =>
       val parts = partitionOnWhere(query)
@@ -74,57 +82,66 @@ object SqlTlpProperties {
           results.tail
             .map(p => p("datarows").arr.length.toString)
             .mkString(" + ")
-        val (sumL, sumR) = (
-          qRes.map(v => v.arr.head.num).sum,
-          partRes.map(v => v.arr.head.num).sum
+        val (resultL, resultR) = (
+          qRes.map(mapper).reduce(reducer),
+          partRes.map(mapper).reduce(reducer)
         )
-        s"SUM mismatch: $sumL != $sumR" |: sumL == sumR
+        s"$aggregate mismatch: $resultL != $resultR" |: resultL == resultR
       }
     }
+  }
+
+  def makeAggregateSumTlpProperty(
+      client: PropTestClient,
+      queryContext: QueryContext
+  ): Prop = {
+    makeAggregateTlpProperty(
+      client,
+      queryContext,
+      Aggregate.SUM,
+      v => v.arr.head.num,
+      (a, b) => a + b
+    )
   }
 
   def makeAggregateMinTlpProperty(
       client: PropTestClient,
       queryContext: QueryContext
   ): Prop = {
-    val gen = SelectQueryGenerator.minFromWhere(queryContext)
+    makeAggregateTlpProperty(
+      client,
+      queryContext,
+      Aggregate.MIN,
+      v =>
+        if v.arr.head.isNull then Double.PositiveInfinity else v.arr.head.num,
+      (a, b) => Math.min(a, b)
+    )
+  }
 
-    Prop.forAll(gen) { (query: SelectQuery) =>
-      val parts = partitionOnWhere(query)
-      val results = parts.map(q => client.runSqlQuery(q.serialize()))
+  def makeAggregateMaxTlpProperty(
+      client: PropTestClient,
+      queryContext: QueryContext
+  ): Prop = {
+    makeAggregateTlpProperty(
+      client,
+      queryContext,
+      Aggregate.MAX,
+      v =>
+        if v.arr.head.isNull then Double.NegativeInfinity else v.arr.head.num,
+      (a, b) => Math.max(a, b)
+    )
+  }
 
-      // If a partition errors, we just discard the case entirely (using implication ==>)
-      // ScalaCheck will fail if the discard rate gets too high
-      val isQuerySuccessful = results
-        .map(res => res("status").num == 200)
-        .reduce((l, r) => l && r)
-
-      isQuerySuccessful ==> {
-        val (qRes, partRes) = (
-          results.head("datarows").arr.toList,
-          results.tail.flatMap(r => r("datarows").arr)
-        )
-
-        val partSizes =
-          results.tail
-            .map(p => p("datarows").arr.length.toString)
-            .mkString(" + ")
-        val (minL, minR) = (
-          qRes
-            .map(v =>
-              if v.arr.head.isNull then Double.PositiveInfinity
-              else v.arr.head.num
-            )
-            .min,
-          partRes
-            .map(v =>
-              if v.arr.head.isNull then Double.PositiveInfinity
-              else v.arr.head.num
-            )
-            .min
-        )
-        s"MIN mismatch: $minL != $minR" |: minL == minR
-      }
-    }
+  def makeAggregateCountTlpProperty(
+      client: PropTestClient,
+      queryContext: QueryContext
+  ): Prop = {
+    makeAggregateTlpProperty(
+      client,
+      queryContext,
+      Aggregate.COUNT,
+      v => v.arr.head.num,
+      (a, b) => a + b
+    )
   }
 }
