@@ -26,11 +26,12 @@ object ContextExprGen {
 
       Gen.oneOf(
         next,
-        ExprGen.unaryOp(List("-$1"), next),
+        ExprGen.unaryOp(List("-$1", "ABS($1)", "SIGN($1)"), next),
         ExprGen.binaryOp(
           List(
             "$1 + $2",
-            "$1 - $2"
+            "$1 - $2",
+            "$1 / $2"
             // TODO disabled for now to reduce chance of integer overflow
             //  Can figure out how to reactivate later, but it's not clear how many bugs will
             //  depend purely on multiplication evaluation and not be catchable otherwise
