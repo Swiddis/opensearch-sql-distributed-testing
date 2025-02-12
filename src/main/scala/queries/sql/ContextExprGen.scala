@@ -51,7 +51,7 @@ object ContextExprGen {
       // TODO null handling is broken, don't generate it for now
 //      val literal = ExprGen.literal(Gen.oneOf(false, true, SqlNull()))
       val literal =
-        ExprGen.literal(Gen.oneOf(false, true).asInstanceOf[SqlBoolean])
+        ExprGen.literal(Gen.oneOf(false, true).asInstanceOf[Gen[SqlBoolean]])
 
       Gen.oneOf(
         literal,

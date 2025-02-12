@@ -27,7 +27,7 @@ class PropertiesSuite extends munit.ScalaCheckSuite {
     super.scalaCheckTestParameters
       .withMinSuccessfulTests(100)
       .withWorkers(workerCount())
-//      .withMaxDiscardRatio(0.1)
+//      .withMaxDiscardRatio(0.5)
 
   override def beforeAll(): Unit = {
     client = openSearchClient()
